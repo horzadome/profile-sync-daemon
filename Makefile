@@ -1,4 +1,4 @@
-VERSION = 6.34
+VERSION = 6.44
 PN = profile-sync-daemon
 
 PREFIX ?= /usr
@@ -7,9 +7,7 @@ BINDIR = $(PREFIX)/bin
 SHAREDIR = $(PREFIX)/share/psd
 MANDIR = $(PREFIX)/share/man/man1
 ZSHDIR = $(PREFIX)/share/zsh/site-functions
-
-# set to anything except 0 to enable manpage compression
-COMPRESS_MAN = 1
+CONTRIBDIR = $(SHAREDIR)/contrib
 
 RM = rm
 SED = sed
@@ -30,25 +28,22 @@ install-bin: common/$(PN)
 	$(INSTALL_DIR) "$(DESTDIR)$(BINDIR)"
 	$(INSTALL_PROGRAM) common/$(PN) "$(DESTDIR)$(BINDIR)/$(PN)"
 	$(INSTALL_PROGRAM) common/psd-overlay-helper "$(DESTDIR)$(BINDIR)/psd-overlay-helper"
+	$(INSTALL_PROGRAM) common/psd-suspend-sync "$(DESTDIR)$(BINDIR)/psd-suspend-sync"
 	ln -s $(PN) "$(DESTDIR)$(BINDIR)/psd"
 	$(INSTALL_DIR) "$(DESTDIR)$(ZSHDIR)"
 	$(INSTALL_DATA) common/zsh-completion "$(DESTDIR)/$(ZSHDIR)/_psd"
 	$(INSTALL_DIR) "$(DESTDIR)$(SHAREDIR)/browsers"
 	$(INSTALL_DATA) common/psd.conf "$(DESTDIR)$(SHAREDIR)/psd.conf"
 	cp common/browsers/* "$(DESTDIR)$(SHAREDIR)/browsers"
+	$(INSTALL_DIR) "$(DESTDIR)$(SHAREDIR)/contrib"
+	cp contrib/* "$(DESTDIR)$(SHAREDIR)/contrib"
 
 install-man:
 	$(Q)echo -e '\033[1;32mInstalling manpage...\033[0m'
 	$(INSTALL_DIR) "$(DESTDIR)$(MANDIR)"
 	$(INSTALL_DATA) doc/psd.1 "$(DESTDIR)$(MANDIR)/psd.1"
 	$(INSTALL_DATA) doc/psd-overlay-helper.1 "$(DESTDIR)$(MANDIR)/psd-overlay-helper.1"
-ifneq ($(COMPRESS_MAN),0)
-	gzip -9 "$(DESTDIR)$(MANDIR)/psd.1"
-	gzip -9 "$(DESTDIR)$(MANDIR)/psd-overlay-helper.1"
-	ln -s psd.1.gz "$(DESTDIR)$(MANDIR)/$(PN).1.gz"
-else
 	ln -s psd.1 "$(DESTDIR)$(MANDIR)/$(PN).1"
-endif
 
 install-systemd:
 	$(Q)echo -e '\033[1;32mInstalling systemd files...\033[0m'
@@ -64,15 +59,16 @@ uninstall-bin:
 	$(RM) "$(DESTDIR)$(BINDIR)/psd"
 	$(RM) "$(DESTDIR)$(ZSHDIR)/_psd"
 	$(RM) "$(DESTDIR)$(BINDIR)/psd-overlay-helper"
+	$(RM) "$(DESTDIR)$(BINDIR)/psd-suspend-sync"
 	$(RM) "$(DESTDIR)$(SHAREDIR)/psd.conf"
 	$(RM) -rf "$(DESTDIR)$(SHAREDIR)/browsers"
+	$(RM) -rf "$(DESTDIR)$(SHAREDIR)/contrib"
 	rmdir "$(DESTDIR)$(SHAREDIR)"
 
 uninstall-man:
-	$(RM) -f "$(DESTDIR)$(MANDIR)/$(PN).1.gz"
-	$(RM) -f "$(DESTDIR)$(MANDIR)/psd.1.gz"
 	$(RM) -f "$(DESTDIR)$(MANDIR)/$(PN).1"
 	$(RM) -f "$(DESTDIR)$(MANDIR)/psd.1"
+	$(RM) -f "$(DESTDIR)$(MANDIR)/psd-overlay-helper.1"
 
 uninstall-systemd:
 	$(RM) "$(DESTDIR)$(INITDIR_SYSTEMD)/psd.service"
